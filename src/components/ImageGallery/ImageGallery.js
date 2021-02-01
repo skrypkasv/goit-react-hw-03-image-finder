@@ -1,11 +1,18 @@
 import React, { Component } from 'react';
 import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
+import Button from '../Button/Button';
 import Modal from '../Modal/Modal';
 import Loader from 'react-loader-spinner';
-
 import styles from './ImageGallery.module.css';
+import PropTypes from 'prop-types';
 
-export default class ImageGallery extends Component {
+class ImageGallery extends Component {
+  static propTypes = {
+    query: PropTypes.string.isRequired,
+    page: PropTypes.number.isRequired,
+    onBtnClick: PropTypes.func.isRequired,
+  };
+
   state = {
     hits: [],
     loading: false,
@@ -16,7 +23,7 @@ export default class ImageGallery extends Component {
 
   URL = 'https://pixabay.com/api/';
   APIKey = '19367568-bec790f08eb1ec18688a31f32';
-  perPage = 12;
+  imgPerPage = 12;
 
   componentDidUpdate(prevProps, prevState) {
     const prevQuery = prevProps.query;
@@ -25,35 +32,36 @@ export default class ImageGallery extends Component {
     const nextPage = this.props.page;
 
     if (newQuery !== prevQuery || nextPage !== prevPage) {
-      this.setState({ loading: true });
+      this.setState({ loading: true, error: null });
 
-      setTimeout(() => {
-        fetch(
-          `${this.URL}?q=${newQuery}&page=${nextPage}&key=${this.APIKey}&image_type=photo&orientation=horizontal&per_page=${this.perPage}`,
-        )
-          .then(response => {
-            if (response.ok) {
-              return response.json();
-            }
-            return Promise.reject(
-              new Error(
-                `Картинок с именем "${newQuery}" не найдено!!!`,
-              ),
-            );
-          })
-          .then(({ hits }) =>
-            this.setState(prev => {
-              if (newQuery !== prevQuery) {
-                return { hits: [...hits] };
-              }
-              return { hits: [...prev.hits, ...hits] };
-            }),
-          )
-          .catch(error => this.setState({ error }))
-          .finally(this.setState({ loading: false }));
-      }, 1000);
+      fetch(
+        `${this.URL}?q=${newQuery}&page=${nextPage}&key=${this.APIKey}&image_type=photo&orientation=horizontal&per_page=${this.imgPerPage}`,
+      )
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+        })
+        .then(({ hits }) => {
+          if (hits.length > 0) {
+            return this.setState(prev => {
+              return newQuery !== prevQuery
+                ? { hits }
+                : { hits: [...prev.hits, ...hits] };
+            });
+          }
+          return Promise.reject(
+            new Error(`"${newQuery}" - not found!!!`),
+          );
+        })
+        .catch(error => {
+          this.setState({ hits: [], error });
+        })
+        .finally(() => {
+          this.setState({ loading: false });
+          this.scroll();
+        });
     }
-    this.scroll();
   }
 
   toggleModal = () => {
@@ -78,22 +86,28 @@ export default class ImageGallery extends Component {
         top: document.documentElement.scrollHeight,
         behavior: 'smooth',
       });
-      console.log('must scroll');
     }, 700);
   };
 
   render() {
     const {
-      hits,
       loading,
+      hits,
       showModal,
       modalImg,
       error,
     } = this.state;
-    console.log(hits);
 
     return (
       <div>
+        {hits.length > 0 && (
+          <ul className={styles.ImageGallery}>
+            <ImageGalleryItem
+              list={hits}
+              onImgClick={this.onImgClick}
+            />
+          </ul>
+        )}
         {loading && (
           <Loader
             type="ThreeDots"
@@ -103,22 +117,21 @@ export default class ImageGallery extends Component {
             timeout={3000}
           />
         )}
-        <ul className={styles.ImageGallery}>
-          {error && <h2>{error.message}</h2>}
-
-          {hits.length > 0 && (
-            <ImageGalleryItem
-              list={hits}
-              onImgClick={this.onImgClick}
-            />
-          )}
-          {showModal && (
-            <Modal onClose={this.toggleModal}>
-              <img src={modalImg.link} alt={modalImg.tag} />
-            </Modal>
-          )}
-        </ul>
+        {hits.length > 0 && (
+          <Button
+            onClick={this.props.onBtnClick}
+            disabled={loading}
+          />
+        )}
+        {showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={modalImg.link} alt={modalImg.tag} />
+          </Modal>
+        )}
+        {error && <h2>{error.message}</h2>}
       </div>
     );
   }
 }
+
+export default ImageGallery;

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import SearchBar from './components/Searchbar/SearchBar';
 import ImageGallery from './components/ImageGallery/ImageGallery';
-import Button from './components/Button/Button';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 class App extends Component {
   state = {
@@ -10,22 +11,29 @@ class App extends Component {
   };
 
   addRequest = str => {
-    this.setState({ request: str, page: 1 });
+    this.setState({
+      request: str,
+      page: 1,
+    });
   };
-
   nextPage = () => {
-    this.setState(({ page }) => ({ page: (page += 1) }));
+    this.setState(({ page }) => ({
+      page: (page += 1),
+    }));
   };
 
   render() {
     const { request, page } = this.state;
-    console.log('page', page);
 
     return (
       <div className="App">
         <SearchBar transRequest={this.addRequest} />
-        <ImageGallery query={request} page={page} />
-        {request && <Button onClick={this.nextPage} />}
+        <ImageGallery
+          query={request}
+          page={page}
+          onBtnClick={this.nextPage}
+        />
+        <ToastContainer autoClose={4000} />
       </div>
     );
   }

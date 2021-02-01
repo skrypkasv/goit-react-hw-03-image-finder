@@ -1,8 +1,13 @@
 import React, { Component } from 'react';
 import styles from './SearchBar.module.css';
-// import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
-export default class SearchBar extends Component {
+class SearchBar extends Component {
+  static propTypes = {
+    transRequest: PropTypes.func.isRequired,
+  };
+
   state = {
     request: '',
   };
@@ -20,7 +25,7 @@ export default class SearchBar extends Component {
 
     request.trim().length > 0
       ? this.props.transRequest(request)
-      : alert('unable to add empty field!!!');
+      : toast.dark('Search-field is empty!');
 
     this.resetInput();
   };
@@ -59,3 +64,5 @@ export default class SearchBar extends Component {
     );
   }
 }
+
+export default SearchBar;
