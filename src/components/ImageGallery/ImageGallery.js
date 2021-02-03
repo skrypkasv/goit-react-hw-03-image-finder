@@ -102,10 +102,22 @@ class ImageGallery extends Component {
       <div>
         {hits.length > 0 && (
           <ul className={styles.ImageGallery}>
-            <ImageGalleryItem
-              list={hits}
-              onImgClick={this.onImgClick}
-            />
+            {hits.map(
+              ({
+                id,
+                tags,
+                webformatURL,
+                largeImageURL,
+              }) => (
+                <ImageGalleryItem
+                  key={id}
+                  tags={tags}
+                  webformatURL={webformatURL}
+                  largeImageURL={largeImageURL}
+                  onImgClick={this.onImgClick}
+                />
+              ),
+            )}
           </ul>
         )}
         {loading && (
